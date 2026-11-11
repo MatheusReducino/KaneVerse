@@ -1,0 +1,133 @@
+
+const express = require("express")
+const router = express.Router()
+const db = require("../db")
+
+router.get("/", async (req, res) =>{
+    try{
+        const r = await db.query("SELECT rp.id, rp.tipo, rp.usuario_id, rp.post_id, u.nome_usuario FROM reacoesposts rp INNER JOIN usuarios u ON rp.usuario_id = u.id ORDER BY rp.id DESC")
+        res.status(200).json(r.rows)
+    }
+    catch(err){
+        res.status(400).json({msg: err.message})
+    }
+})
+
+router.get("/post/:id", async (req, res) =>{
+    try{
+        const id = req.params.id
+        const r = await db.query("SELECT rp.id, rp.tipo, rp.usuario_id, rp.post_id, u.nome_usuario FROM reacoesposts rp INNER JOIN usuarios u ON rp.usuario_id = u.id WHERE rp.post_id = $1", [id])
+        res.status(200).json(r.rows)
+    }
+    catch(err){
+        res.status(400).json({msg: err.message})
+    }
+})
+
+router.get("/resumo/:id", async (req, res) =>{
+    try{
+        const id = req.params.id
+        const r = await db.query("SELECT tipo, COUNT(*) AS quantidade FROM reacoesposts WHERE post_id = $1 GROUP BY tipo ORDER BY quantidade DESC", [id])
+        res.status(200).json(r.rows)
+    }
+    catch(err){
+        res.status(400).json({msg: err.message})
+    }
+})
+
+router.get("/usuario/:usuario_id/post/:post_id", async (req, res) =>{
+    try{
+        const { usuario_id, post_id } = req.params
+        const r = await db.query("SELECT * FROM reacoesposts WHERE usuario_id = $1 AND post_id = $2", [usuario_id, post_id])
+        if(!r.rowCount){
+            return res.status(404).json({msg: "Reacao nao encontrada"})
+        }
+        res.status(200).json(r.rows[0])
+    }
+    catch(err){
+        res.status(400).json({msg: err.message})
+    }
+})
+
+router.post("/", async (req, res) =>{
+    try{
+        const { tipo, usuario_id, post_id } = req.body
+        const tipos = ["curtida", "fogo", "caveira", "risada"]
+        if(!tipo || !usuario_id || !post_id){
+            return res.status(400).json({msg: "Preencha o tipo, usuario e publicacao!"})
+        }
+        if(!tipos.includes(tipo)){
+            return res.status(400).json({msg: "Tipo de reacao invalido"})
+        }
+        const usuario = await db.query("SELECT id, banido FROM usuarios WHERE id = $1", [usuario_id])
+        if(!usuario.rowCount){
+            return res.status(404).json({msg: "Usuario nao encontrado"})
+        }
+        if(usuario.rows[0].banido){
+            return res.status(403).json({msg: "Usuario banido nao pode reagir"})
+        }
+        const post = await db.query("SELECT id FROM posts WHERE id = $1", [post_id])
+        if(!post.rowCount){
+            return res.status(404).json({msg: "Publicacao nao encontrada"})
+        }
+        const r = await db.query("INSERT INTO reacoesposts (tipo, usuario_id, post_id) VALUES ($1, $2, $3) RETURNING *", [tipo, usuario_id, post_id])
+        res.status(201).json(r.rows[0])
+    }
+    catch(err){
+        if(err.code === "23505"){
+            return res.status(409).json({msg: "Esse usuario ja reagiu a essa publicacao"})
+        }
+        res.status(400).json({msg: err.message})
+    }
+})
+
+router.put("/:id", async (req, res) =>{
+    try{
+        const id = req.params.id
+        const { tipo } = req.body
+        const tipos = ["curtida", "fogo", "caveira", "risada"]
+        if(!tipos.includes(tipo)){
+            return res.status(400).json({msg: "Tipo de reacao invalido"})
+        }
+        const r = await db.query("UPDATE reacoesposts SET tipo = $1 WHERE id = $2 RETURNING *", [tipo, id])
+        if(!r.rowCount){
+            return res.status(404).json({msg: "Reacao nao encontrada"})
+        }
+        res.status(200).json(r.rows[0])
+    }
+    catch(err){
+        res.status(400).json({msg: err.message})
+    }
+})
+
+router.put("/usuario/:usuario_id/post/:post_id", async (req, res) =>{
+    try{
+        const { usuario_id, post_id } = req.params
+        const { tipo } = req.body
+        const tipos = ["curtida", "fogo", "caveira", "risada"]
+        if(!tipos.includes(tipo)){
+            return res.status(400).json({msg: "Tipo de reacao invalido"})
+        }
+        const r = await db.query("INSERT INTO reacoesposts (tipo, usuario_id, post_id) VALUES ($1, $2, $3) ON CONFLICT (usuario_id, post_id) DO UPDATE SET tipo = EXCLUDED.tipo RETURNING *", [tipo, usuario_id, post_id])
+        res.status(200).json(r.rows[0])
+    }
+    catch(err){
+        res.status(400).json({msg: err.message})
+    }
+})
+
+router.delete("/:id", async (req, res) =>{
+    try{
+        const id = req.params.id
+        const r = await db.query("DELETE FROM reacoesposts WHERE id = $1 RETURNING *", [id])
+        if(!r.rowCount){
+            return res.status(404).json({msg: "Reacao nao encontrada"})
+        }
+        res.status(200).json({msg: "Reacao excluida com sucesso", reacao: r.rows[0]})
+    }
+    catch(err){
+        res.status(400).json({msg: err.message})
+    }
+})
+
+module.exports = router
