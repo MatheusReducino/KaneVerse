@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação - KaneVerse</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        nav a { margin-right: 12px; }
+        details { border: 1px solid #ccc; padding: 8px; margin: 8px 0; }
+        summary { cursor: pointer; }
+        pre { background: #eee; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Documentação da API - KaneVerse</h1>
+    <p>Projeto com Node.js, Express e PostgreSQL.</p>
+    <p><b>Endereço:</b> http://localhost:3000</p>
+    <p><b>Total de rotas:</b> 92</p>
+
+    <h2>Como usar</h2>
+    <p>Para criar conta, use <code>POST /usuarios</code>. Para entrar, use <code>POST /auth/login</code> com email e senha.</p>
+    <p>Nas rotas que precisam de login, envie <code>Authorization: Bearer SEU_TOKEN</code>.</p>
+    <p>Rotas de admin precisam de usuário com cargo admin. Para editar e apagar conteúdo, geralmente precisa ser dono ou admin.</p>
+    <p>Os IDs são números inteiros positivos. Para imagens, use PNG, JPG ou WEBP, até 3 MB.</p>
+    <p>Erros comuns: 400 (dados inválidos), 401 (não autenticado), 403 (sem permissão), 404 (não encontrado), 409 (duplicado).</p>
+    <p>Para criar um admin, é preciso alterar o cargo no banco. Não existe rota pública para se tornar admin.</p>
+    <p>Os Kane Points são ganhos com posts (+10), comentários (+5) e reações (+1), e gastos ao desbloquear títulos.</p>
+
+    <h2>Rotas</h2>
+    <nav>
+        <a href="#m-auth">auth</a>
+        <a href="#m-banimentos">banimentos</a>
+        <a href="#m-comentariosnoticias">comentariosnoticias</a>
+        <a href="#m-comentariosposts">comentariosposts</a>
+        <a href="#m-noticias">noticias</a>
+        <a href="#m-noticias_palavraschave">noticias_palavraschave</a>
+        <a href="#m-palavraschave">palavraschave</a>
+        <a href="#m-post_palavrachave">post_palavrachave</a>
+        <a href="#m-posts">posts</a>
+        <a href="#m-reacoesnoticias">reacoesnoticias</a>
+        <a href="#m-reacoesposts">reacoesposts</a>
+        <a href="#m-titulos">titulos</a>
+        <a href="#m-usuario_titulo">usuario_titulo</a>
+        <a href="#m-usuarios">usuarios</a>
+    </nav>
+
+    <section id="m-auth">
+        <h2>auth 2 rotas</h2>
+        <details>
+            <summary><b>POST</b> <code>/auth/login</code> - Pública</summary>
+            <p>Confere email e senha e devolve um token JWT.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>email</code>, <code>senha</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;email&quot;: &quot;kanefan@example.com&quot;,
+  &quot;senha&quot;: &quot;SenhaForte123&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Login realizado&quot;,
+  &quot;token&quot;: &quot;eyJ...exemplo&quot;,
+  &quot;usuario&quot;: {
+    &quot;id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+    &quot;cargo&quot;: &quot;user&quot;
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/auth/me</code> - JWT
+            (usuario)</summary>
+            <p>Consulta os dados do usuario logado.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+  &quot;email&quot;: &quot;kanefan@example.com&quot;,
+  &quot;cargo&quot;: &quot;user&quot;,
+  &quot;banido&quot;: false
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-banimentos">
+        <h2>banimentos 5 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/banimentos</code> - JWT
+            (admin)</summary>
+            <p>Admin lista historico de banimentos.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;usuario_id&quot;: 2,
+    &quot;administrador_id&quot;: 1,
+    &quot;motivo&quot;: &quot;Violacao das regras&quot;,
+    &quot;ativo&quot;: true
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/banimentos/usuario/:id</code> - JWT
+            (admin)</summary>
+            <p>Admin lista banimentos de um usuario.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;usuario_id&quot;: 2,
+    &quot;administrador_id&quot;: 1,
+    &quot;motivo&quot;: &quot;Violacao das regras&quot;,
+    &quot;ativo&quot;: true
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/banimentos/:id</code> - JWT
+            (admin)</summary>
+            <p>Admin consulta banimento pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;usuario_id&quot;: 2,
+  &quot;administrador_id&quot;: 1,
+  &quot;motivo&quot;: &quot;Violacao das regras&quot;,
+  &quot;ativo&quot;: true
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/banimentos</code> - JWT
+            (admin)</summary>
+            <p>Admin bane usuario e registra motivo.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>usuario_id</code>, <code>motivo</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;usuario_id&quot;: 2,
+  &quot;motivo&quot;: &quot;Violacao das regras&quot;
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Usuario banido&quot;,
+  &quot;registro&quot;: {
+    &quot;id&quot;: 1,
+    &quot;usuario_id&quot;: 2,
+    &quot;administrador_id&quot;: 1,
+    &quot;motivo&quot;: &quot;Violacao das regras&quot;,
+    &quot;ativo&quot;: true
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/banimentos/:id/reativar</code> - JWT
+            (admin)</summary>
+            <p>Admin reativa conta banida.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Usuario reativado&quot;,
+  &quot;usuario_id&quot;: 2
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-comentariosnoticias">
+        <h2>comentariosnoticias 6 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/comentariosnoticias</code> - Pública</summary>
+            <p>Lista comentarios em noticias.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Grande noticia!&quot;,
+    &quot;noticia_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/comentariosnoticias/noticia/:id</code> - Pública</summary>
+            <p>Lista comentarios de uma noticia.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Grande noticia!&quot;,
+    &quot;noticia_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/comentariosnoticias/:id</code> - Pública</summary>
+            <p>Consulta um comentario pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;texto&quot;: &quot;Grande noticia!&quot;,
+  &quot;noticia_id&quot;: 1,
+  &quot;usuario_id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/comentariosnoticias</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Comenta uma noticia e ganha 5 Kane Points.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>texto</code>, <code>noticia_id</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;texto&quot;: &quot;Boa noticia!&quot;,
+  &quot;noticia_id&quot;: 1
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Comentario criado (+5 Kane Points)&quot;,
+  &quot;comentario&quot;: {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Grande noticia!&quot;,
+    &quot;noticia_id&quot;: 1,
+    &quot;usuario_id&quot;: 1
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/comentariosnoticias/:id</code> - Login (dono ou admin)</summary>
+            <p>Edita comentario proprio ou moderado.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>texto</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;texto&quot;: &quot;Comentario editado&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;texto&quot;: &quot;Grande noticia!&quot;,
+  &quot;noticia_id&quot;: 1,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/comentariosnoticias/:id</code> - Login (dono ou admin)</summary>
+            <p>Exclui comentario proprio ou moderado.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Comentario excluido&quot;,
+  &quot;comentario&quot;: {
+    &quot;id&quot;: 1
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-comentariosposts">
+        <h2>comentariosposts 6 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/comentariosposts</code> - Pública</summary>
+            <p>Lista comentarios em posts.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Que golaço!&quot;,
+    &quot;post_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/comentariosposts/post/:id</code> - Pública</summary>
+            <p>Lista comentarios de um post.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Que golaço!&quot;,
+    &quot;post_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/comentariosposts/:id</code> - Pública</summary>
+            <p>Consulta um comentario pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;texto&quot;: &quot;Que golaço!&quot;,
+  &quot;post_id&quot;: 1,
+  &quot;usuario_id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/comentariosposts</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Comenta um post e ganha 5 Kane Points.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>texto</code>, <code>post_id</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;texto&quot;: &quot;Que golaço!&quot;,
+  &quot;post_id&quot;: 1
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Comentario criado (+5 Kane Points)&quot;,
+  &quot;comentario&quot;: {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Que golaço!&quot;,
+    &quot;post_id&quot;: 1,
+    &quot;usuario_id&quot;: 1
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/comentariosposts/:id</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Edita comentario proprio ou moderado.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>texto</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;texto&quot;: &quot;Comentario editado&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;texto&quot;: &quot;Que golaço!&quot;,
+  &quot;post_id&quot;: 1,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/comentariosposts/:id</code> - Login (dono ou admin)</summary>
+            <p>Exclui comentario proprio ou moderado.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Comentario excluido&quot;,
+  &quot;comentario&quot;: {
+    &quot;id&quot;: 1
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-noticias">
+        <h2>noticias 10 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/noticias</code> - Pública</summary>
+            <p>Lista noticias publicadas.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;titulo&quot;: &quot;Kane marca dois gols&quot;,
+    &quot;subtitulo&quot;: &quot;Destaque da rodada&quot;,
+    &quot;conteudo&quot;: &quot;O atacante foi decisivo.&quot;,
+    &quot;categoria&quot;: &quot;Harry Kane&quot;,
+    &quot;editada&quot;: false,
+    &quot;usuario_id&quot;: 1
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/noticias/categoria/:categoria</code> - Pública</summary>
+            <p>Filtra noticias por categoria textual.</p>
+            <p><b>Parâmetros:</b> <code>categoria</code> — texto da categoria</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;titulo&quot;: &quot;Kane marca dois gols&quot;,
+    &quot;subtitulo&quot;: &quot;Destaque da rodada&quot;,
+    &quot;conteudo&quot;: &quot;O atacante foi decisivo.&quot;,
+    &quot;categoria&quot;: &quot;Harry Kane&quot;,
+    &quot;editada&quot;: false,
+    &quot;usuario_id&quot;: 1
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/noticias/:id/palavraschave</code> - Pública</summary>
+            <p>Lista as palavras-chave de uma noticia.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/noticias/:id/foto</code> - Pública</summary>
+            <p>Retorna imagem da noticia.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <p>Retorna bytes da imagem com <code>Content-Type: image/png</code>, <code>image/jpeg</code> ou
+            <code>image/webp</code> (nao JSON).</p>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/noticias/:id</code> - Pública</summary>
+            <p>Consulta uma noticia pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;titulo&quot;: &quot;Kane marca dois gols&quot;,
+  &quot;subtitulo&quot;: &quot;Destaque da rodada&quot;,
+  &quot;conteudo&quot;: &quot;O atacante foi decisivo.&quot;,
+  &quot;categoria&quot;: &quot;Harry Kane&quot;,
+  &quot;editada&quot;: false,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/noticias</code> - JWT (usuario ou
+            admin, conforme dono)</summary>
+            <p>Publica noticia como usuario logado.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>titulo</code>, <code>subtitulo</code>,
+            <code>conteudo</code><br/><b>Opcionais:</b> <code>categoria</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;titulo&quot;: &quot;Kane marca dois gols&quot;,
+  &quot;subtitulo&quot;: &quot;Destaque da rodada&quot;,
+  &quot;conteudo&quot;: &quot;Texto da noticia&quot;,
+  &quot;categoria&quot;: &quot;Harry Kane&quot;
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;titulo&quot;: &quot;Kane marca dois gols&quot;,
+  &quot;subtitulo&quot;: &quot;Destaque da rodada&quot;,
+  &quot;categoria&quot;: &quot;Harry Kane&quot;,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/noticias/:id</code> - JWT (usuario
+            ou admin, conforme dono)</summary>
+            <p>Edita noticia propria ou de outro usuario sendo admin.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>titulo</code>, <code>subtitulo</code>,
+            <code>conteudo</code><br/><b>Opcionais:</b> <code>categoria</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;titulo&quot;: &quot;Novo titulo&quot;,
+  &quot;subtitulo&quot;: &quot;Novo subtitulo&quot;,
+  &quot;conteudo&quot;: &quot;Novo conteudo&quot;,
+  &quot;categoria&quot;: &quot;Harry Kane&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;titulo&quot;: &quot;Novo titulo&quot;,
+  &quot;editada&quot;: true
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/noticias/:id/foto</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Envia ou troca imagem da noticia.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> Campo obrigatorio <code>imagem</code> (arquivo PNG, JPG ou WEBP, ate 3 MB). Enviar como
+            <code>multipart/form-data</code>.</p>
+            <p>Envie um arquivo no campo <code>imagem</code>.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Foto salva&quot;,
+  &quot;url&quot;: &quot;/noticias/1/foto&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/noticias/:id/foto</code> - Login (dono ou admin)</summary>
+            <p>Remove a imagem da noticia.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Foto removida&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/noticias/:id</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Exclui noticia propria ou moderada.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Noticia removida&quot;,
+  &quot;noticia&quot;: {
+    &quot;id&quot;: 1
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-noticias_palavraschave">
+        <h2>noticias_palavraschave 5 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/noticias_palavraschave</code> - Pública</summary>
+            <p>Lista relacionamentos entre noticias e palavras-chave.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;noticia_id&quot;: 1,
+    &quot;palavra_id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/noticias_palavraschave/noticia/:id</code> - Pública</summary>
+            <p>Lista palavras de uma noticia.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/noticias_palavraschave/palavra/:id</code> - Pública</summary>
+            <p>Lista IDs de noticias relacionadas a palavra.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/noticias_palavraschave</code> - Login (dono ou admin)</summary>
+            <p>Associa palavra a noticia propria (ou admin).</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>noticia_id</code>, <code>palavra_id</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;noticia_id&quot;: 1,
+  &quot;palavra_id&quot;: 1
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;noticia_id&quot;: 1,
+  &quot;palavra_id&quot;: 1,
+  &quot;palavra&quot;: &quot;Harry Kane&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/noticias_palavraschave/:noticia_id/:palavra_id</code> - Login (dono ou admin)</summary>
+            <p>Remove associacao de palavra e noticia.</p>
+            <p><b>Parâmetros:</b> <code>noticia_id</code> — numero inteiro positivo; <code>palavra_id</code> —
+            numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Relacao removida&quot;
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-palavraschave">
+        <h2>palavraschave 5 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/palavraschave</code> - Pública</summary>
+            <p>Lista palavras-chave.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/palavraschave/:id</code> - Pública</summary>
+            <p>Busca palavra-chave pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;palavra&quot;: &quot;Harry Kane&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/palavraschave</code> - JWT
+            (admin)</summary>
+            <p>Admin cadastra palavra-chave.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>palavra</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;palavra&quot;: &quot;Recordes&quot;
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;palavra&quot;: &quot;Harry Kane&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/palavraschave/:id</code> - JWT
+            (admin)</summary>
+            <p>Admin altera palavra-chave.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>palavra</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;palavra&quot;: &quot;Gols&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;palavra&quot;: &quot;Harry Kane&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/palavraschave/:id</code> - JWT
+            (admin)</summary>
+            <p>Admin remove palavra-chave.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Palavra removida&quot;,
+  &quot;palavra&quot;: {
+    &quot;id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-post_palavrachave">
+        <h2>post_palavrachave 5 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/post_palavrachave</code> - Pública</summary>
+            <p>Lista relacionamentos entre posts e palavras-chave.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;post_id&quot;: 1,
+    &quot;palavra_id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/post_palavrachave/post/:id</code> - Pública</summary>
+            <p>Lista palavras de um post.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/post_palavrachave/palavra/:id</code> - Pública</summary>
+            <p>Lista IDs de posts vinculados a uma palavra.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/post_palavrachave</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Associa palavra-chave a post proprio (ou admin).</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>post_id</code>, <code>palavra_id</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;post_id&quot;: 1,
+  &quot;palavra_id&quot;: 1
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;post_id&quot;: 1,
+  &quot;palavra_id&quot;: 1,
+  &quot;palavra&quot;: &quot;Harry Kane&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/post_palavrachave/:post_id/:palavra_id</code> - Login (dono ou admin)</summary>
+            <p>Remove associacao de palavra e post.</p>
+            <p><b>Parâmetros:</b> <code>post_id</code> — numero inteiro positivo; <code>palavra_id</code> — numero
+            inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Relacao removida&quot;
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-posts">
+        <h2>posts 10 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/posts</code> - Pública</summary>
+            <p>Lista publicacoes recentes.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Grande jogo do Harry Kane!&quot;,
+    &quot;editado&quot;: false,
+    &quot;data_post&quot;: &quot;2026-11-18T18:00:00Z&quot;,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/posts/usuario/:id</code> - Pública</summary>
+            <p>Lista publicacoes feitas por um usuario.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Grande jogo do Harry Kane!&quot;,
+    &quot;editado&quot;: false,
+    &quot;data_post&quot;: &quot;2026-11-18T18:00:00Z&quot;,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/posts/:id/palavraschave</code> - Pública</summary>
+            <p>Lista palavras-chave de uma publicacao.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;palavra&quot;: &quot;Harry Kane&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/posts/:id/foto</code> - Pública</summary>
+            <p>Retorna a foto enviada no post.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <p>Retorna bytes da imagem com <code>Content-Type: image/png</code>, <code>image/jpeg</code> ou
+            <code>image/webp</code> (nao JSON).</p>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/posts/:id</code> - Pública</summary>
+            <p>Consulta um post pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;texto&quot;: &quot;Grande jogo do Harry Kane!&quot;,
+  &quot;editado&quot;: false,
+  &quot;data_post&quot;: &quot;2026-11-18T18:00:00Z&quot;,
+  &quot;usuario_id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/posts</code> - JWT (usuario ou
+            admin, conforme dono)</summary>
+            <p>Cria um post e concede 10 Kane Points.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>texto</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;texto&quot;: &quot;Grande jogo do Harry Kane!&quot;
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Post criado (+10 Kane Points)&quot;,
+  &quot;post&quot;: {
+    &quot;id&quot;: 1,
+    &quot;texto&quot;: &quot;Grande jogo do Harry Kane!&quot;,
+    &quot;editado&quot;: false,
+    &quot;data_post&quot;: &quot;2026-11-18T18:00:00Z&quot;,
+    &quot;usuario_id&quot;: 1
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/posts/:id</code> - JWT (usuario ou
+            admin, conforme dono)</summary>
+            <p>Edita texto do proprio post (admin pode moderar).</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>texto</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;texto&quot;: &quot;Post atualizado&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;texto&quot;: &quot;Post atualizado&quot;,
+  &quot;editado&quot;: true,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/posts/:id/foto</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Envia ou substitui a foto do post.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> Campo obrigatorio <code>imagem</code> (arquivo PNG, JPG ou WEBP, ate 3 MB). Enviar como
+            <code>multipart/form-data</code>.</p>
+            <p>Envie um arquivo no campo <code>imagem</code>.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Foto salva&quot;,
+  &quot;url&quot;: &quot;/posts/1/foto&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/posts/:id/foto</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Remove foto do post.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Foto removida&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/posts/:id</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Exclui post proprio ou moderado.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Post excluido&quot;,
+  &quot;post&quot;: {
+    &quot;id&quot;: 1
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-reacoesnoticias">
+        <h2>reacoesnoticias 8 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/reacoesnoticias</code> - Pública</summary>
+            <p>Lista reacoes em noticias.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;tipo&quot;: &quot;fogo&quot;,
+    &quot;noticia_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/reacoesnoticias/noticia/:id</code> - Pública</summary>
+            <p>Lista reacoes de uma noticia.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;tipo&quot;: &quot;fogo&quot;,
+    &quot;noticia_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/reacoesnoticias/resumo/:id</code> - Pública</summary>
+            <p>Agrupa reacoes de noticia por tipo.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;tipo&quot;: &quot;curtida&quot;,
+    &quot;quantidade&quot;: &quot;3&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/reacoesnoticias/usuario/:usuario_id/noticia/:noticia_id</code> - Pública</summary>
+            <p>Consulta reacao de usuario especifico a noticia.</p>
+            <p><b>Parâmetros:</b> <code>usuario_id</code> — numero inteiro positivo; <code>noticia_id</code> —
+            numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;tipo&quot;: &quot;fogo&quot;,
+  &quot;noticia_id&quot;: 1,
+  &quot;usuario_id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/reacoesnoticias</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Registra reacao e concede 1 Kane Point.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>tipo</code>, <code>noticia_id</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;tipo&quot;: &quot;fogo&quot;,
+  &quot;noticia_id&quot;: 1
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Reacao criado (+1 Kane Point)&quot;,
+  &quot;reacao&quot;: {
+    &quot;id&quot;: 1,
+    &quot;tipo&quot;: &quot;fogo&quot;,
+    &quot;noticia_id&quot;: 1,
+    &quot;usuario_id&quot;: 1
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/reacoesnoticias/usuario/:usuario_id/noticia/:noticia_id</code> - Login (dono ou admin)</summary>
+            <p>Muda a propria reacao na noticia.</p>
+            <p><b>Parâmetros:</b> <code>usuario_id</code> — numero inteiro positivo; <code>noticia_id</code> —
+            numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>tipo</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;tipo&quot;: &quot;curtida&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;tipo&quot;: &quot;fogo&quot;,
+  &quot;noticia_id&quot;: 1,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/reacoesnoticias/:id</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Altera reacao propria (ou admin).</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>tipo</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;tipo&quot;: &quot;curtida&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;tipo&quot;: &quot;fogo&quot;,
+  &quot;noticia_id&quot;: 1,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/reacoesnoticias/:id</code> - Login (dono ou admin)</summary>
+            <p>Remove reacao propria (ou admin).</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Reacao excluida&quot;,
+  &quot;reacao&quot;: {
+    &quot;id&quot;: 1
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-reacoesposts">
+        <h2>reacoesposts 8 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/reacoesposts</code> - Pública</summary>
+            <p>Lista reacoes registradas em posts.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;tipo&quot;: &quot;curtida&quot;,
+    &quot;post_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/reacoesposts/post/:id</code> - Pública</summary>
+            <p>Lista reacoes de um post.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;tipo&quot;: &quot;curtida&quot;,
+    &quot;post_id&quot;: 1,
+    &quot;usuario_id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/reacoesposts/resumo/:id</code> - Pública</summary>
+            <p>Agrupa a quantidade de reacoes de um post por tipo.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;tipo&quot;: &quot;curtida&quot;,
+    &quot;quantidade&quot;: &quot;3&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/reacoesposts/usuario/:usuario_id/post/:post_id</code> - Pública</summary>
+            <p>Consulta reacao de usuario especifico a um post.</p>
+            <p><b>Parâmetros:</b> <code>usuario_id</code> — numero inteiro positivo; <code>post_id</code> — numero
+            inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;tipo&quot;: &quot;curtida&quot;,
+  &quot;post_id&quot;: 1,
+  &quot;usuario_id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/reacoesposts</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Registra reacao e concede 1 Kane Point.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>tipo</code>, <code>post_id</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;tipo&quot;: &quot;curtida&quot;,
+  &quot;post_id&quot;: 1
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Reacao criado (+1 Kane Point)&quot;,
+  &quot;reacao&quot;: {
+    &quot;id&quot;: 1,
+    &quot;tipo&quot;: &quot;curtida&quot;,
+    &quot;post_id&quot;: 1,
+    &quot;usuario_id&quot;: 1
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/reacoesposts/usuario/:usuario_id/post/:post_id</code> - Login (dono ou admin)</summary>
+            <p>Muda a propria reacao usando usuario e post na URL.</p>
+            <p><b>Parâmetros:</b> <code>usuario_id</code> — numero inteiro positivo; <code>post_id</code> — numero
+            inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>tipo</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;tipo&quot;: &quot;fogo&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;tipo&quot;: &quot;curtida&quot;,
+  &quot;post_id&quot;: 1,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/reacoesposts/:id</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Altera reacao propria (ou admin).</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>tipo</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;tipo&quot;: &quot;fogo&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;tipo&quot;: &quot;curtida&quot;,
+  &quot;post_id&quot;: 1,
+  &quot;usuario_id&quot;: 1
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/reacoesposts/:id</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Remove reacao propria (ou admin).</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Reacao excluida&quot;,
+  &quot;reacao&quot;: {
+    &quot;id&quot;: 1
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-titulos">
+        <h2>titulos 6 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/titulos</code> - Pública</summary>
+            <p>Lista os titulos existentes.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+    &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+    &quot;kane_points_desbloqueio&quot;: 25
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/titulos/:id/usuarios</code> - Pública</summary>
+            <p>Lista usuarios que desbloquearam um titulo.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+    &quot;data_desbloqueio&quot;: &quot;2026-11-18T18:00:00Z&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/titulos/:id</code> - Pública</summary>
+            <p>Consulta titulo pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+  &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+  &quot;kane_points_desbloqueio&quot;: 25
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/titulos</code> - Admin</summary>
+            <p>Admin cadastra titulo.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>nome_titulo</code>, <code>descricao</code>,
+            <code>kane_points_desbloqueio</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;nome_titulo&quot;: &quot;Torcedor fiel&quot;,
+  &quot;descricao&quot;: &quot;Titulo especial&quot;,
+  &quot;kane_points_desbloqueio&quot;: 50
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+  &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+  &quot;kane_points_desbloqueio&quot;: 25
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/titulos/:id</code> - JWT
+            (admin)</summary>
+            <p>Admin altera titulo.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>nome_titulo</code>, <code>descricao</code>,
+            <code>kane_points_desbloqueio</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;nome_titulo&quot;: &quot;Torcedor fiel&quot;,
+  &quot;descricao&quot;: &quot;Descricao alterada&quot;,
+  &quot;kane_points_desbloqueio&quot;: 60
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+  &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+  &quot;kane_points_desbloqueio&quot;: 25
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/titulos/:id</code> - JWT
+            (admin)</summary>
+            <p>Admin remove titulo.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Titulo removido&quot;,
+  &quot;titulo&quot;: {
+    &quot;id&quot;: 1,
+    &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+    &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+    &quot;kane_points_desbloqueio&quot;: 25
+  }
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-usuario_titulo">
+        <h2>usuario_titulo 5 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/usuario_titulo</code> - Pública</summary>
+            <p>Lista relacoes de titulos desbloqueados.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;usuario_id&quot;: 1,
+    &quot;titulo_id&quot;: 1,
+    &quot;data_desbloqueio&quot;: &quot;2026-11-18T18:00:00Z&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/usuario_titulo/usuario/:id</code> - Pública</summary>
+            <p>Lista titulos desbloqueados por usuario.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+    &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+    &quot;kane_points_desbloqueio&quot;: 25,
+    &quot;data_desbloqueio&quot;: &quot;2026-11-18T18:00:00Z&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/usuario_titulo/disponiveis/:id</code> - Pública</summary>
+            <p>Lista titulos ainda disponiveis, incluindo saldo e se pode comprar.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+    &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+    &quot;kane_points_desbloqueio&quot;: 25,
+    &quot;kane_points&quot;: 40,
+    &quot;pode_comprar&quot;: true
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/usuario_titulo</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Desbloqueia titulo para a conta logada, debitando o saldo numa transacao.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>titulo_id</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;titulo_id&quot;: 1
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Titulo desbloqueado&quot;,
+  &quot;compra&quot;: {
+    &quot;usuario_id&quot;: 1,
+    &quot;titulo_id&quot;: 1,
+    &quot;data_desbloqueio&quot;: &quot;2026-11-18T18:00:00Z&quot;
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/usuario_titulo/:usuario_id/:titulo_id</code> - Admin</summary>
+            <p>Admin revoga titulo desbloqueado, sem reembolso.</p>
+            <p><b>Parâmetros:</b> <code>usuario_id</code> — numero inteiro positivo; <code>titulo_id</code> —
+            numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Titulo revogado; sem reembolso automatico&quot;
+}</pre>
+        </details>
+    </section>
+
+    <section id="m-usuarios">
+        <h2>usuarios 11 rotas</h2>
+        <details>
+            <summary><b>GET</b> <code>/usuarios</code> - Pública</summary>
+            <p>Lista perfis publicos, sem senha ou email.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+    &quot;descricao&quot;: &quot;Torcedor do Kane&quot;,
+    &quot;kane_points&quot;: 15,
+    &quot;cargo&quot;: &quot;user&quot;,
+    &quot;data_cadastro&quot;: &quot;2026-11-18T18:00:00Z&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/usuarios/:id/pfp</code> - Pública</summary>
+            <p>Retorna a foto de perfil em formato de imagem.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <p>Retorna bytes da imagem com <code>Content-Type: image/png</code>, <code>image/jpeg</code> ou
+            <code>image/webp</code> (nao JSON).</p>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/usuarios/:id/titulos</code> - Pública</summary>
+            <p>Lista titulos desbloqueados por um usuario.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>[
+  {
+    &quot;id&quot;: 1,
+    &quot;nome_titulo&quot;: &quot;Torcedor&quot;,
+    &quot;descricao&quot;: &quot;Primeira recompensa&quot;,
+    &quot;kane_points_desbloqueio&quot;: 25,
+    &quot;data_desbloqueio&quot;: &quot;2026-11-18T18:00:00Z&quot;
+  }
+]</pre>
+        </details>
+        <details>
+            <summary><b>GET</b> <code>/usuarios/:id</code> - Pública</summary>
+            <p>Busca um perfil pelo ID.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+  &quot;descricao&quot;: &quot;Torcedor do Kane&quot;,
+  &quot;kane_points&quot;: 15,
+  &quot;cargo&quot;: &quot;user&quot;,
+  &quot;data_cadastro&quot;: &quot;2026-11-18T18:00:00Z&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>POST</b> <code>/usuarios</code> - Pública</summary>
+            <p>Cadastra um usuario comum. Cargo e pontos nao podem ser definidos no cadastro.</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>nome_usuario</code>, <code>email</code>,
+            <code>senha</code><br/><b>Opcionais:</b> <code>descricao</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+  &quot;email&quot;: &quot;kanefan@example.com&quot;,
+  &quot;senha&quot;: &quot;SenhaForte123&quot;,
+  &quot;descricao&quot;: &quot;Torcedor do Harry Kane&quot;
+}</pre>
+            <p><b>Resposta 201:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+  &quot;descricao&quot;: &quot;Torcedor do Harry Kane&quot;,
+  &quot;kane_points&quot;: 15,
+  &quot;cargo&quot;: &quot;user&quot;,
+  &quot;data_cadastro&quot;: &quot;2026-11-18T18:00:00Z&quot;,
+  &quot;email&quot;: &quot;kanefan@example.com&quot;,
+  &quot;banido&quot;: false
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/usuarios/:id</code> - JWT (usuario
+            ou admin, conforme dono)</summary>
+            <p>Edita a propria conta, ou uma conta administrada por admin.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>nome_usuario</code>, <code>email</code><br/><b>Opcionais:</b>
+<code>senha</code>, <code>descricao</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+  &quot;email&quot;: &quot;kanefan@example.com&quot;,
+  &quot;senha&quot;: &quot;NovaSenha123&quot;,
+  &quot;descricao&quot;: &quot;Atualizada&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+  &quot;descricao&quot;: &quot;Torcedor do Kane&quot;,
+  &quot;kane_points&quot;: 15,
+  &quot;cargo&quot;: &quot;user&quot;,
+  &quot;data_cadastro&quot;: &quot;2026-11-18T18:00:00Z&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/usuarios/:id/pfp</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Envia imagem de perfil (PNG, JPG ou WEBP, ate 3 MB).</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> Campo obrigatorio <code>imagem</code> (arquivo PNG, JPG ou WEBP, ate 3 MB). Enviar como
+            <code>multipart/form-data</code>.</p>
+            <p>Envie um arquivo no campo <code>imagem</code>.</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Foto atualizada&quot;,
+  &quot;url&quot;: &quot;/usuarios/1/pfp&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/usuarios/:id/pfp</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Remove a foto de perfil.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Foto removida&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>DELETE</b> <code>/usuarios/:id</code> - JWT
+            (usuario ou admin, conforme dono)</summary>
+            <p>Exclui conta comum (propria conta ou com permissao de admin).</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;msg&quot;: &quot;Usuario excluido&quot;,
+  &quot;usuario&quot;: {
+    &quot;id&quot;: 1,
+    &quot;nome_usuario&quot;: &quot;KaneFan&quot;
+  }
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/usuarios/:id/cargo</code> - JWT
+            (admin)</summary>
+            <p>Admin altera o cargo de um usuario.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>cargo</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;cargo&quot;: &quot;admin&quot;
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;nome_usuario&quot;: &quot;KaneFan&quot;,
+  &quot;cargo&quot;: &quot;admin&quot;
+}</pre>
+        </details>
+        <details>
+            <summary><b>PUT</b> <code>/usuarios/:id/pontos</code> - JWT
+            (admin)</summary>
+            <p>Admin soma ou retira pontos de um usuario.</p>
+            <p><b>Parâmetros:</b> <code>id</code> — numero inteiro positivo</p>
+            <p><b>Corpo:</b> <b>Obrigatórios:</b> <code>quantidade</code></p>
+            <p><b>Exemplo de envio:</b></p>
+            <pre>{
+  &quot;quantidade&quot;: 10
+}</pre>
+            <p><b>Resposta 200:</b></p>
+            <pre>{
+  &quot;id&quot;: 1,
+  &quot;kane_points&quot;: 25
+}</pre>
+        </details>
+    </section>
+
+    <hr>
+    <p>Documentação das rotas da API. Os exemplos de resposta podem variar de acordo com os dados do banco.</p>
+</body>
+</html>
