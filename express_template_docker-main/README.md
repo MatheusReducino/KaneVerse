@@ -1,6 +1,41 @@
+
+## 🫪 Como executar o projeto
+
+Para executar o projeto, é necessário ter o **Docker Desktop** instalado e aberto.
+
+### 1. Iniciar os containers
+
+Primeiro, abra o terminal na pasta do projeto, onde está o arquivo `docker-compose.yml`.
+
+Depois, execute:
+
+```bash
+docker compose up
+```
+
+Esse comando vai criar e iniciar os containers do Node.js, PostgreSQL e Pgweb.
+
+### 2. Acessar a aplicação
+
+Após a inicialização, os serviços poderão ser acessados pelos seguintes endereços:
+
+- **API e documentação:** http://localhost:3000
+- **Pgweb (banco de dados):** http://localhost:8081
+
+### 3. Parar os containers
+
+Para encerrar a execução, pressione `Ctrl + C` no terminal e depois execute:
+
+```bash
+docker compose down
+```
+
+Esse comando para e remove os containers e a rede criada pelo Docker Compose, sem apagar os dados armazenados no volume do PostgreSQL.
+
+Para iniciar o projeto novamente, basta executar `docker compose up`.
 # KaneVerse 󠁧󠁢󠁥󠁮󠁧
 
-![Harry Kane](/imagens/kane1.jpg)
+![Harry Kane](/KaneVerse/imagens/kane1.jpg)
 
 > Projeto de desenvolvimento web utilizando React, Node.js, Express e PostgreSQL.
 

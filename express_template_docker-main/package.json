@@ -1,0 +1,31 @@
+{
+  "name": "express-backend-postgres",
+  "version": "1.0.0",
+  "description": "Base project for backend development using Node, Express, and PostgreSQL.",
+  "main": "src/backend.js",
+  "scripts": {
+    "start": "node src/backend.js",
+    "dev": "nodemon --legacy-watch --watch src src/backend.js"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "postgresql",
+    "backend"
+  ],
+  "author": "Matheus Reducino",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.5.0",
+    "nodemon": "^3.1.14",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
