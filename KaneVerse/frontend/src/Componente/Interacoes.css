@@ -1,0 +1,26 @@
+.interacoes{
+    border-top: 1px solid #eee;
+    margin-top: 15px;
+    padding-top: 12px;
+}
+
+.reacao{
+    background-color: #f8f1f3;
+    color: #222;
+    padding: 7px 12px;
+}
+
+.reacao.selecionada,.reacao:hover{
+    background-color: #f0ced6;
+    color: #560819;
+}
+
+.tag button{
+    background: transparent;
+    color: inherit;
+    padding: 0 4px;
+}
+
+.comentarios{
+    margin-top: 15px;
+}

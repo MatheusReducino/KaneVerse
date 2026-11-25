@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Documentação da API - KaneVerse</title>
+<style>
+        body{
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            line-height: 1.5;
+        }
+        a{
+            color: white;
+        }
+        table{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td{
+            border: 1px solid white;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th{
+            background-color: #151515;
+        }
+        td p{
+            margin: 0 0 8px;
+        }
+        td p:last-child{
+            margin-bottom: 0;
+        }
+        pre{
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            margin: 8px 0;
+        }
+        code{
+            overflow-wrap: anywhere;
+        }
+        .tabela{
+            overflow-x: auto;
+        }
+        .tabela table{
+            min-width: 1050px;
+        }
+        @media(max-width: 600px){
+            body{
+                margin: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>Documentação da API - KaneVerse</h1>
+<p>API REST desenvolvida com Node.js, Express e PostgreSQL.</p>
+<h2>Sumário</h2>
+<ul>
+<li><a href="#inicio">Primeiros passos</a></li>
+<li><a href="#usuarios">Usuários 12 rotas</a></li>
+<li><a href="#posts">Posts 8 rotas</a></li>
+<li><a href="#noticias">Notícias 8 rotas</a></li>
+<li><a href="#comentarios">Comentários 5 rotas</a></li>
+<li><a href="#reacoes">Reações 4 rotas</a></li>
+<li><a href="#titulos">Títulos 7 rotas</a></li>
+<li><a href="#palavraschave">Palavras-chave 9 rotas</a></li>
+<li><a href="#banimentos">Banimentos 3 rotas</a></li>
+<li><a href="#erros">Códigos HTTP</a></li>
+</ul>
+<hr/>
+<section id="inicio"><h2>Primeiros passos</h2>
+<p>URL base: http://localhost:3000. GET / e GET /documentacao exibem esta documentação HTML (configure index.js conforme as instruções).</p><p>Os exemplos abaixo seguem os campos e as mensagens do código da API. IDs, datas e outros dados são ilustrativos; não foram capturados de uma execução do PostgreSQL. O token de login é representado por um marcador. As rotas GET podem retornar listas vazias.</p>
+<h3>Autenticação</h3>
+<p>Cadastre-se em <code>POST /usuarios</code>, faça login em <code>POST /usuarios/login</code> e use o token retornado nas rotas protegidas. O JWT dura 24 horas. As permissões e o banimento são consultados no banco.</p>
+<pre>Authorization: Bearer SEU_TOKEN
+Content-Type: application/json</pre>
+<p>Rotas públicas não exigem token. Rotas Admin exigem um administrador autenticado. Autor significa o usuário que criou o registro. No Postman, escolha Authorization &gt; Bearer Token.</p>
+<h3>Parâmetros e respostas</h3>
+<p>Substitua <code>:id</code> por um ID existente. IDs enviados no JSON devem ser números inteiros positivos. Listagens retornam arrays (inclusive vazios); buscas individuais retornam objetos; escritas retornam <code>msg</code> e, quando previsto, o registro. Senhas nunca são retornadas.</p>
+<h3>Upload</h3>
+<p>Envie PNG ou JPEG de até 2 MB usando Body &gt; form-data no Postman, ou <code>FormData</code> no React. Use o campo <code>pfp</code> ou <code>foto</code>, conforme a rota. Não defina manualmente Content-Type para FormData. Os GETs de imagem retornam bytes, não JSON.</p>
+<pre>const dados = new FormData();
+dados.append("pfp", foto);
+const r = await fetch("http://localhost:3000/usuarios/me/pfp", {
+    method: "PUT",
+    headers: {Authorization: "Bearer " + token},
+    body: dados
+});</pre>
+<h3>Regras do sistema</h3>
+<p>Posts concedem 10 pontos; comentários, 2. Reações não concedem pontos. Excluir conteúdo não desconta pontos. Títulos são desbloqueados sem gastar pontos. O cadastro não permite escolher privilégios ou pontos. Contas banidas não usam rotas protegidas.</p>
+</section>
+<hr/>
+<section id="usuarios">
+<h2>Usuários 12 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /usuarios</td><td>Lista os perfis públicos. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "nome_usuario": "Harry",
+        "descricao": "Fã de Kane",
+        "admin": false,
+        "banido": false,
+        "kane_points": 0,
+        "data_cadastro": "2026-11-25T18:00:00.000Z",
+        "tem_pfp": false
+    }
+]</pre></td></tr>
+<tr><td>GET /usuarios/ranking</td><td>Lista os 10 usuários não banidos com maior pontuação. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "nome_usuario": "Harry",
+        "kane_points": 0,
+        "tem_pfp": false
+    }
+]</pre></td></tr>
+<tr><td>GET /usuarios/me</td><td>Retorna o perfil do usuário autenticado, incluindo email. Acesso: Login.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "id": 1,
+    "nome_usuario": "Harry",
+    "descricao": "Fã de Kane",
+    "admin": false,
+    "banido": false,
+    "kane_points": 0,
+    "data_cadastro": "2026-11-25T18:00:00.000Z",
+    "tem_pfp": false,
+    "email": "harry@exemplo.com"
+}</pre></td></tr>
+<tr><td>GET /usuarios/:id/pfp</td><td>Retorna a foto de perfil pelo ID do usuário. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647. A imagem precisa existir.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>Corpo binário da imagem. Exemplo: HTTP 200, Content-Type: image/png; conteúdo: bytes de um arquivo PNG. Não retorna JSON.</pre></td></tr>
+<tr><td>GET /usuarios/:id</td><td>Busca um perfil público pelo ID. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "id": 1,
+    "nome_usuario": "Harry",
+    "descricao": "Fã de Kane",
+    "admin": false,
+    "banido": false,
+    "kane_points": 0,
+    "data_cadastro": "2026-11-25T18:00:00.000Z",
+    "tem_pfp": false
+}</pre></td></tr>
+<tr><td>POST /usuarios</td><td>Cadastra um usuário comum com zero pontos. Acesso: Público.</td><td>nome_usuario, email, senha</td><td>descricao</td><td>nome_usuario: string não vazia, até 255 caracteres, único. email: formato válido, até 255 caracteres, único; convertido para minúsculas. senha: string não vazia, mínimo 8 caracteres, máximo 72 bytes UTF-8. descricao: string de até 500 caracteres ou null; omitida fica null. Admin, banido e pontos definidos pelo servidor.</td><td><pre>{
+    "nome_usuario": "Harry",
+    "email": "harry@exemplo.com",
+    "descricao": "Fã de Kane",
+    "senha": "SenhaDeTeste123"
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Usuario cadastrado com sucesso",
+    "usuario": {
+        "id": 1,
+        "nome_usuario": "Harry",
+        "email": "harry@exemplo.com",
+        "descricao": "Fã de Kane",
+        "kane_points": 0,
+        "admin": false,
+        "banido": false
+    }
+}</pre></td></tr>
+<tr><td>POST /usuarios/login</td><td>Autentica por email e senha e gera JWT de 24h. Acesso: Público.</td><td>email, senha</td><td>Nenhum</td><td>email: string não vazia até 255 caracteres; senha: string não vazia até 72 bytes UTF-8. Credenciais corretas e usuário não banido.</td><td><pre>{
+    "email": "harry@exemplo.com",
+    "senha": "SenhaDeTeste123"
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Login realizado com sucesso",
+    "token": "TOKEN_JWT_GERADO_PELO_SERVIDOR",
+    "usuario": {
+        "id": 1,
+        "nome_usuario": "Harry",
+        "email": "harry@exemplo.com",
+        "descricao": "Fã de Kane",
+        "kane_points": 0,
+        "admin": false,
+        "banido": false,
+        "tem_pfp": false
+    }
+}</pre></td></tr>
+<tr><td>PUT /usuarios/me</td><td>Atualiza nome, email e descrição do próprio perfil. Acesso: Login.</td><td>nome_usuario, email</td><td>descricao</td><td>nome_usuario: string não vazia, até 255 caracteres, único. email: formato válido, até 255 caracteres, único; convertido para minúsculas. descricao: string de até 500 caracteres ou null; omitida fica null. Unicidade desconsidera o próprio usuário.</td><td><pre>{
+    "nome_usuario": "Harry",
+    "email": "harry@exemplo.com",
+    "descricao": "Fã de Kane"
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Perfil atualizado",
+    "usuario": {
+        "id": 1,
+        "nome_usuario": "Harry",
+        "email": "harry@exemplo.com",
+        "descricao": "Fã de Kane",
+        "kane_points": 0,
+        "admin": false,
+        "banido": false,
+        "tem_pfp": false
+    }
+}</pre></td></tr>
+<tr><td>PUT /usuarios/me/pfp</td><td>Envia ou substitui foto de perfil. Acesso: Login.</td><td>pfp (arquivo)</td><td>Nenhum</td><td>Arquivo PNG ou JPEG, até 2 MiB (2097152 bytes); MIME e assinatura inicial compatíveis; apenas um arquivo. multipart/form-data.</td><td><pre>pfp = arquivo (File)</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Foto de perfil atualizada"
+}</pre></td></tr>
+<tr><td>DELETE /usuarios/me/pfp</td><td>Remove a própria foto de perfil. Acesso: Login.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Foto removida"
+}</pre></td></tr>
+<tr><td>PUT /usuarios/:id/points</td><td>Define a pontuação de um usuário. Acesso: Admin.</td><td>kane_points</td><td>Nenhum</td><td>kane_points: inteiro entre 0 e 2147483647. :id na URL: inteiro positivo até 2147483647.</td><td><pre>{
+    "kane_points": 150
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Kane Points atualizados",
+    "usuario": {
+        "id": 1,
+        "kane_points": 150
+    }
+}</pre></td></tr>
+<tr><td>DELETE /usuarios/:id</td><td>Exclui a conta indicada. Acesso: Dono ou admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647. Não permite excluir administradores ou usuários referenciados por banimentos.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Usuario excluido"
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="posts">
+<h2>Posts 8 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /posts</td><td>Lista posts com o nome do autor e indicador tem_foto. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "texto": "Grande Kane!",
+        "editado": false,
+        "data_post": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 1,
+        "tem_foto": false,
+        "nome_usuario": "Harry"
+    }
+]</pre></td></tr>
+<tr><td>GET /posts/:id/foto</td><td>Retorna a imagem da publicação. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647. A imagem precisa existir.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>Corpo binário da imagem. Exemplo: HTTP 200, Content-Type: image/png; conteúdo: bytes de um arquivo PNG. Não retorna JSON.</pre></td></tr>
+<tr><td>GET /posts/:id</td><td>Busca um post pelo ID. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "id": 1,
+    "texto": "Grande Kane!",
+    "editado": false,
+    "data_post": "2026-11-25T18:00:00.000Z",
+    "usuario_id": 1,
+    "tem_foto": false,
+    "nome_usuario": "Harry"
+}</pre></td></tr>
+<tr><td>POST /posts</td><td>Cria post. Concede +10 Kane Points. Acesso: Login.</td><td>texto</td><td>Nenhum</td><td>texto: string não vazia (não pode conter somente espaços).</td><td><pre>{
+    "texto": "Grande Kane!"
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Post criado com sucesso",
+    "post": {
+        "id": 1,
+        "texto": "Grande Kane!",
+        "editado": false,
+        "data_post": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 1,
+        "tem_foto": false
+    }
+}</pre></td></tr>
+<tr><td>PUT /posts/:id</td><td>Edita a publicação e marca como editada. Acesso: Autor.</td><td>texto</td><td>Nenhum</td><td>texto: string não vazia (não pode conter somente espaços). :id na URL: inteiro positivo até 2147483647.</td><td><pre>{
+    "texto": "Grande Kane!"
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Post editado com sucesso",
+    "post": {
+        "id": 1,
+        "texto": "Grande Kane!",
+        "editado": true,
+        "data_post": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 1,
+        "tem_foto": false
+    }
+}</pre></td></tr>
+<tr><td>DELETE /posts/:id</td><td>Exclui a publicação e os vínculos dependentes. Acesso: Autor ou admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Post excluido com sucesso"
+}</pre></td></tr>
+<tr><td>PUT /posts/:id/foto</td><td>Envia ou substitui a foto da publicação. Acesso: Autor.</td><td>foto (arquivo)</td><td>Nenhum</td><td>Arquivo PNG ou JPEG, até 2 MiB (2097152 bytes); MIME e assinatura inicial compatíveis; apenas um arquivo. multipart/form-data. :id na URL: inteiro positivo até 2147483647.</td><td><pre>foto = arquivo (File)</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Foto atualizada"
+}</pre></td></tr>
+<tr><td>DELETE /posts/:id/foto</td><td>Remove a foto da publicação. Acesso: Autor.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Foto removida"
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="noticias">
+<h2>Notícias 8 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /noticias</td><td>Lista notícias com o nome do autor e indicador tem_foto. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "titulo": "Kane em destaque",
+        "subtitulo": "Atacante brilha",
+        "conteudo": "Texto da notícia",
+        "categoria": "Bayern",
+        "editada": false,
+        "data_noticia": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 2,
+        "tem_foto": false,
+        "nome_usuario": "Editor"
+    }
+]</pre></td></tr>
+<tr><td>GET /noticias/:id/foto</td><td>Retorna a imagem da publicação. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647. A imagem precisa existir.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>Corpo binário da imagem. Exemplo: HTTP 200, Content-Type: image/png; conteúdo: bytes de um arquivo PNG. Não retorna JSON.</pre></td></tr>
+<tr><td>GET /noticias/:id</td><td>Busca uma notícia pelo ID. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "id": 1,
+    "titulo": "Kane em destaque",
+    "subtitulo": "Atacante brilha",
+    "conteudo": "Texto da notícia",
+    "categoria": "Bayern",
+    "editada": false,
+    "data_noticia": "2026-11-25T18:00:00.000Z",
+    "usuario_id": 2,
+    "tem_foto": false,
+    "nome_usuario": "Editor"
+}</pre></td></tr>
+<tr><td>POST /noticias</td><td>Cria notícia. Acesso: Admin.</td><td>titulo, subtitulo, conteudo</td><td>categoria</td><td>titulo: string não vazia até 255 caracteres; subtitulo: string não vazia até 500; conteudo: string não vazia; categoria: string não vazia até 50 caracteres, padrão Harry Kane se omitida.</td><td><pre>{
+    "titulo": "Kane em destaque",
+    "subtitulo": "Atacante brilha",
+    "conteudo": "Texto da notícia",
+    "categoria": "Bayern"
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Noticia criada com sucesso",
+    "noticia": {
+        "id": 1,
+        "titulo": "Kane em destaque",
+        "subtitulo": "Atacante brilha",
+        "conteudo": "Texto da notícia",
+        "categoria": "Bayern",
+        "editada": false,
+        "data_noticia": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 2,
+        "tem_foto": false
+    }
+}</pre></td></tr>
+<tr><td>PUT /noticias/:id</td><td>Edita a publicação e marca como editada. Acesso: Admin.</td><td>titulo, subtitulo, conteudo</td><td>categoria</td><td>titulo: string não vazia até 255 caracteres; subtitulo: string não vazia até 500; conteudo: string não vazia; categoria: string não vazia até 50 caracteres, padrão Harry Kane se omitida. :id na URL: inteiro positivo até 2147483647.</td><td><pre>{
+    "titulo": "Kane em destaque",
+    "subtitulo": "Atacante brilha",
+    "conteudo": "Texto da notícia",
+    "categoria": "Bayern"
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Noticia editada com sucesso",
+    "noticia": {
+        "id": 1,
+        "titulo": "Kane em destaque",
+        "subtitulo": "Atacante brilha",
+        "conteudo": "Texto da notícia",
+        "categoria": "Bayern",
+        "editada": true,
+        "data_noticia": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 2,
+        "tem_foto": false
+    }
+}</pre></td></tr>
+<tr><td>DELETE /noticias/:id</td><td>Exclui a publicação e os vínculos dependentes. Acesso: Admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Noticia excluida com sucesso"
+}</pre></td></tr>
+<tr><td>PUT /noticias/:id/foto</td><td>Envia ou substitui a foto da publicação. Acesso: Admin.</td><td>foto (arquivo)</td><td>Nenhum</td><td>Arquivo PNG ou JPEG, até 2 MiB (2097152 bytes); MIME e assinatura inicial compatíveis; apenas um arquivo. multipart/form-data. :id na URL: inteiro positivo até 2147483647.</td><td><pre>foto = arquivo (File)</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Foto atualizada"
+}</pre></td></tr>
+<tr><td>DELETE /noticias/:id/foto</td><td>Remove a foto da publicação. Acesso: Admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Foto removida"
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="comentarios">
+<h2>Comentários 5 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /comentarios/post/:id</td><td>Lista comentários da publicação indicada. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "texto": "Grande Kane!",
+        "data_comentario": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 1,
+        "post_id": 1,
+        "noticia_id": null,
+        "nome_usuario": "Harry"
+    }
+]</pre></td></tr>
+<tr><td>GET /comentarios/noticia/:id</td><td>Lista comentários da publicação indicada. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "texto": "Grande Kane!",
+        "data_comentario": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 1,
+        "post_id": null,
+        "noticia_id": 1,
+        "nome_usuario": "Harry"
+    }
+]</pre></td></tr>
+<tr><td>POST /comentarios</td><td>Cria comentário e concede +2 Kane Points. Acesso: Login.</td><td>texto e um entre post_id ou noticia_id</td><td>Nenhum além da escolha do ID</td><td>texto: string não vazia (não pode conter somente espaços). Informe exatamente um dos IDs (post_id ou noticia_id); o outro deve ser omitido ou null. ID deve ser inteiro positivo até 2147483647, referente a registro existente.</td><td><pre>{
+    "texto": "Grande Kane!",
+    "post_id": 1
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Comentario criado",
+    "comentario": {
+        "id": 1,
+        "texto": "Grande Kane!",
+        "data_comentario": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 1,
+        "post_id": 1,
+        "noticia_id": null
+    }
+}</pre></td></tr>
+<tr><td>PUT /comentarios/:id</td><td>Edita o texto de um comentário. Acesso: Autor.</td><td>texto</td><td>Nenhum</td><td>texto: string não vazia (não pode conter somente espaços). :id na URL: inteiro positivo até 2147483647.</td><td><pre>{
+    "texto": "Comentário editado"
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Comentario editado",
+    "comentario": {
+        "id": 1,
+        "texto": "Comentário editado",
+        "data_comentario": "2026-11-25T18:00:00.000Z",
+        "usuario_id": 1,
+        "post_id": 1,
+        "noticia_id": null
+    }
+}</pre></td></tr>
+<tr><td>DELETE /comentarios/:id</td><td>Exclui um comentário pelo ID do comentário. Acesso: Autor ou admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Comentario excluido"
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="reacoes">
+<h2>Reações 4 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /reacoes/post/:id</td><td>Lista reações da publicação indicada. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "tipo": "fogo",
+        "usuario_id": 1,
+        "post_id": 1,
+        "noticia_id": null,
+        "nome_usuario": "Harry"
+    }
+]</pre></td></tr>
+<tr><td>GET /reacoes/noticia/:id</td><td>Lista reações da publicação indicada. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "tipo": "fogo",
+        "usuario_id": 1,
+        "post_id": null,
+        "noticia_id": 1,
+        "nome_usuario": "Harry"
+    }
+]</pre></td></tr>
+<tr><td>POST /reacoes</td><td>Cria ou altera a reação do usuário à publicação. Acesso: Login.</td><td>tipo e um entre post_id ou noticia_id</td><td>Nenhum além da escolha do ID</td><td>tipo: curtida, fogo, caveira ou risada. Informe exatamente um dos IDs (post_id ou noticia_id); o outro deve ser omitido ou null. ID deve ser inteiro positivo até 2147483647, referente a registro existente.</td><td><pre>{
+    "tipo": "fogo",
+    "noticia_id": 1
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Reacao registrada",
+    "reacao": {
+        "id": 1,
+        "tipo": "fogo",
+        "usuario_id": 1,
+        "post_id": null,
+        "noticia_id": 1
+    }
+}</pre></td></tr>
+<tr><td>DELETE /reacoes/:id</td><td>Remove a própria reação pelo ID da reação. Acesso: Autor.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Reacao removida"
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="titulos">
+<h2>Títulos 7 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /titulos</td><td>Lista os títulos disponíveis. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 4,
+        "nome_titulo": "Lenda",
+        "descricao": "Título especial",
+        "kane_points_desbloqueio": 100
+    }
+]</pre></td></tr>
+<tr><td>GET /titulos/usuario/:id</td><td>Lista títulos desbloqueados pelo usuário e data de desbloqueio. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 4,
+        "nome_titulo": "Lenda",
+        "descricao": "Título especial",
+        "kane_points_desbloqueio": 100,
+        "data_desbloqueio": "2026-11-25T18:00:00.000Z"
+    }
+]</pre></td></tr>
+<tr><td>GET /titulos/:id</td><td>Busca um título pelo ID. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "id": 4,
+    "nome_titulo": "Lenda",
+    "descricao": "Título especial",
+    "kane_points_desbloqueio": 100
+}</pre></td></tr>
+<tr><td>POST /titulos</td><td>Cria um título. Acesso: Admin.</td><td>nome_titulo, descricao, kane_points_desbloqueio</td><td>Nenhum</td><td>nome_titulo: string não vazia, única, até 50 caracteres; descricao: string não vazia até 200 caracteres; kane_points_desbloqueio: inteiro entre 0 e 2147483647.</td><td><pre>{
+    "nome_titulo": "Lenda",
+    "descricao": "Título especial",
+    "kane_points_desbloqueio": 100
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Titulo criado",
+    "titulo": {
+        "id": 4,
+        "nome_titulo": "Lenda",
+        "descricao": "Título especial",
+        "kane_points_desbloqueio": 100
+    }
+}</pre></td></tr>
+<tr><td>PUT /titulos/:id</td><td>Atualiza os dados de um título. Acesso: Admin.</td><td>nome_titulo, descricao, kane_points_desbloqueio</td><td>Nenhum</td><td>nome_titulo: string não vazia, única, até 50 caracteres; descricao: string não vazia até 200 caracteres; kane_points_desbloqueio: inteiro entre 0 e 2147483647. Unicidade desconsidera o título editado. :id na URL: inteiro positivo até 2147483647.</td><td><pre>{
+    "nome_titulo": "Lenda",
+    "descricao": "Título especial",
+    "kane_points_desbloqueio": 100
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Titulo atualizado",
+    "titulo": {
+        "id": 4,
+        "nome_titulo": "Lenda",
+        "descricao": "Título especial",
+        "kane_points_desbloqueio": 100
+    }
+}</pre></td></tr>
+<tr><td>DELETE /titulos/:id</td><td>Exclui um título e seus vínculos. Acesso: Admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Titulo excluido"
+}</pre></td></tr>
+<tr><td>POST /titulos/:id/desbloquear</td><td>Desbloqueia título se houver pontos suficientes. Acesso: Login.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647. O usuário precisa ter pontuação suficiente e ainda não possuir o título.</td><td><span>Não possui body.</span></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Titulo desbloqueado",
+    "titulo": {
+        "usuario_id": 1,
+        "titulo_id": 4,
+        "data_desbloqueio": "2026-11-25T18:00:00.000Z"
+    }
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="palavraschave">
+<h2>Palavras-chave 9 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /palavraschave</td><td>Lista todas as palavras-chave. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 5,
+        "palavra": "Inglaterra"
+    }
+]</pre></td></tr>
+<tr><td>GET /palavraschave/post/:id</td><td>Lista palavras-chave de um post. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "vinculo_id": 1,
+        "id": 5,
+        "palavra": "Inglaterra"
+    }
+]</pre></td></tr>
+<tr><td>GET /palavraschave/noticia/:id</td><td>Lista palavras-chave de uma notícia. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "vinculo_id": 2,
+        "id": 5,
+        "palavra": "Inglaterra"
+    }
+]</pre></td></tr>
+<tr><td>GET /palavraschave/:id</td><td>Busca uma palavra-chave pelo ID. Acesso: Público.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "id": 5,
+    "palavra": "Inglaterra"
+}</pre></td></tr>
+<tr><td>POST /palavraschave</td><td>Cadastra uma palavra-chave. Acesso: Admin.</td><td>palavra</td><td>Nenhum</td><td>palavra: string não vazia, única, até 50 caracteres.</td><td><pre>{
+    "palavra": "Inglaterra"
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Palavra-chave criada",
+    "palavra": {
+        "id": 5,
+        "palavra": "Inglaterra"
+    }
+}</pre></td></tr>
+<tr><td>PUT /palavraschave/:id</td><td>Edita uma palavra-chave. Acesso: Admin.</td><td>palavra</td><td>Nenhum</td><td>palavra: string não vazia, única, até 50 caracteres. Unicidade desconsidera a palavra editada. :id na URL: inteiro positivo até 2147483647.</td><td><pre>{
+    "palavra": "Inglaterra"
+}</pre></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Palavra-chave atualizada",
+    "palavra": {
+        "id": 5,
+        "palavra": "Inglaterra"
+    }
+}</pre></td></tr>
+<tr><td>DELETE /palavraschave/:id</td><td>Exclui palavra-chave e vínculos. Acesso: Admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Palavra-chave excluida"
+}</pre></td></tr>
+<tr><td>POST /palavraschave/vincular</td><td>Vincula uma palavra-chave a uma publicação. Acesso: Autor do post ou admin; para notícia, somente admin.</td><td>palavra_id e um entre post_id ou noticia_id</td><td>Nenhum além da escolha do ID</td><td>palavra_id: inteiro positivo até 2147483647, referente a registro existente. Informe exatamente um dos IDs (post_id ou noticia_id); o outro deve ser omitido ou null. ID deve ser inteiro positivo até 2147483647, referente a registro existente. Vínculo não pode existir previamente.</td><td><pre>{
+    "post_id": 1,
+    "palavra_id": 2
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Palavra-chave vinculada",
+    "vinculo": {
+        "id": 1,
+        "post_id": 1,
+        "noticia_id": null,
+        "palavra_id": 2
+    }
+}</pre></td></tr>
+<tr><td>DELETE /palavraschave/vinculo/:id</td><td>Remove uma associação pelo vinculo_id. Acesso: Autor do post ou admin; para notícia, somente admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Vinculo removido"
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="banimentos">
+<h2>Banimentos 3 rotas</h2>
+<div class="tabela">
+<table>
+<thead>
+<tr><th>Método e rota</th><th>Funcionalidade / acesso</th><th>Body obrigatório</th><th>Body opcional</th><th>Restrições</th><th>Exemplo de body</th><th>Retorno de sucesso</th></tr>
+</thead>
+<tbody>
+<tr><td>GET /banimentos</td><td>Lista o histórico de banimentos com usuário e administrador. Acesso: Admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>[
+    {
+        "id": 1,
+        "usuario_id": 2,
+        "administrador_id": 1,
+        "motivo": "Descumprimento das regras",
+        "data_banimento": "2026-11-25T18:00:00.000Z",
+        "ativo": true,
+        "usuario": "Bayern",
+        "administrador": "Harry"
+    }
+]</pre></td></tr>
+<tr><td>POST /banimentos</td><td>Bane um usuário e registra o motivo. Acesso: Admin.</td><td>usuario_id, motivo</td><td>Nenhum</td><td>usuario_id: inteiro positivo até 2147483647, referente a registro existente. motivo: string não vazia até 500 caracteres. Usuário não pode ser admin nem estar banido.</td><td><pre>{
+    "usuario_id": 2,
+    "motivo": "Descumprimento das regras"
+}</pre></td><td><strong>HTTP 201</strong><pre>{
+    "msg": "Usuario banido",
+    "banimento": {
+        "id": 1,
+        "usuario_id": 2,
+        "administrador_id": 1,
+        "motivo": "Descumprimento das regras",
+        "data_banimento": "2026-11-25T18:00:00.000Z",
+        "ativo": true
+    }
+}</pre></td></tr>
+<tr><td>PUT /banimentos/:id</td><td>Desativa um banimento e libera o usuário se não houver outro banimento ativo. Acesso: Admin.</td><td>Nenhum</td><td>Nenhum</td><td>Sem parâmetros no corpo. :id na URL: inteiro positivo até 2147483647. O banimento deve estar ativo; informe o ID do banimento.</td><td><span>Não possui body.</span></td><td><strong>HTTP 200</strong><pre>{
+    "msg": "Banimento desativado",
+    "banimento": {
+        "id": 1,
+        "usuario_id": 2,
+        "administrador_id": 1,
+        "motivo": "Descumprimento das regras",
+        "data_banimento": "2026-11-25T18:00:00.000Z",
+        "ativo": false
+    }
+}</pre></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<hr/>
+<section id="erros">
+<h2>Códigos HTTP</h2>
+<table>
+<thead><tr><th>Código</th><th>Significado</th></tr></thead>
+<tbody>
+<tr><td>200</td><td>operação realizada</td></tr>
+<tr><td>201</td><td>registro criado</td></tr>
+<tr><td>400</td><td>dados inválidos</td></tr>
+<tr><td>401</td><td>token ou credenciais inválidos</td></tr>
+<tr><td>403</td><td>acesso negado</td></tr>
+<tr><td>404</td><td>registro ou rota inexistente</td></tr>
+<tr><td>409</td><td>conflito</td></tr>
+<tr><td>413</td><td>arquivo ou requisição muito grande</td></tr>
+<tr><td>500</td><td>erro interno</td></tr>
+</tbody>
+</table>
+<pre>{"msg": "Id invalido"}</pre>
+</section>
+</body>
+</html>

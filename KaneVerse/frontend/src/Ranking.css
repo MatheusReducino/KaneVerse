@@ -1,0 +1,9 @@
+.usuario-ranking {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.usuario-ranking {
+    font-weight: bold;
+}

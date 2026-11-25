@@ -1,0 +1,33 @@
+.auth-layout{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 950px;
+    margin: auto;
+    background-color: white;
+    border-radius: 16px;
+    overflow: hidden;
+}
+.auth-arte{
+    min-height: 480px;
+}
+.auth-foto{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.card.autenticacao{
+    padding: 30px;
+    margin: auto;
+    border: none;
+    width: 100%;
+    box-shadow: none;
+}
+@media(max-width: 750px){
+    .auth-layout{
+        grid-template-columns: 1fr;
+    }
+    .auth-arte{
+        min-height: 0;
+        height: 240px;
+    }
+}

@@ -1,0 +1,26 @@
+.cabecalho-secao{
+    margin-bottom: 20px;
+}
+.convite, .feed-titulo{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.pontos-card{
+    background-color: #560819;
+    color: white;
+}
+.pontos-card .botao{
+    background-color: white;
+    color: #560819;
+}
+.atalhos a{
+    display: block;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+.criar-publicacao textarea{
+    min-height: 110px;
+}

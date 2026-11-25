@@ -1,0 +1,31 @@
+{
+  "name": "Kaneverse",
+  "version": "1.0.0",
+  "description": "Kane",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon --legacy-watch --watch src src/index.js"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "postgresql",
+    "backend"
+  ],
+  "author": "Matheus Reducino",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.5.0",
+    "nodemon": "^3.1.14",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

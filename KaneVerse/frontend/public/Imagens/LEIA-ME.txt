@@ -1,0 +1,9 @@
+Coloque as fotos nesta pasta. Mantenha os nomes e formatos abaixo para nao precisar mudar o JSX.
+
+hero-kane.png - Componente/Banner.jsx
+noticias-kane.jpg - Componente/Banner.jsx
+login-kane.jpg - Login.jsx
+cadastro-kane.jpg - Cadastro.jsx
+estatisticas-kane.png - Estatisticas.jsx
+
+No JSX, use src="/Imagens/nome-da-foto.png". Nao escreva public no caminho.

@@ -1,0 +1,95 @@
+.topo{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 16px 5%;
+    background-color: #680c20;
+    color: white;
+}
+
+.marca{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.marca-verse,.conta b{
+    color: #ffe2a0;
+}
+
+
+.numero{
+    background-color: white;
+    color: #680c20;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+}
+
+nav,.conta{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+nav a,.link-entrar{
+    color: white;
+    padding: 7px;
+}
+
+nav a.active{
+    border-bottom: 3px solid #ffe2a0;
+}
+
+.conta .botao{
+    background-color: white;
+    color: #680c20;
+}
+
+.pagina{
+    max-width: 1200px;
+    margin: auto;
+    padding: 28px 20px 50px;
+    min-height: 75vh;
+}
+
+footer{
+    background-color: #560819;
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+footer a,footer strong{
+    color: white;
+}
+
+footer p{
+    margin: 8px 0;
+}
+
+
+nav a:hover{
+    color: #ffe2a0;
+    text-decoration: none;
+}
+
+@media (max-width: 750px){
+    .topo{
+        padding: 14px;
+    }
+
+    nav{
+        width: 100%;
+        order: 3;
+    }
+}

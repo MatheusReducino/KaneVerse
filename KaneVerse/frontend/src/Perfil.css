@@ -1,0 +1,9 @@
+.perfil-topo {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.perfil-topo {
+    flex-wrap: wrap;
+}

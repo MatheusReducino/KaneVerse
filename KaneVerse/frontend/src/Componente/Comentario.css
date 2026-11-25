@@ -1,0 +1,10 @@
+.comentario{
+    background-color: #f6f3f3;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 8px 0;
+}
+
+.comentario p{
+    margin: 5px 0;
+}

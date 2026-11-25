@@ -1,0 +1,46 @@
+.estatisticas{
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    background-color: #f3eee8;
+    border-radius: 16px;
+    overflow: hidden;
+    color: black;
+}
+.foto-estatisticas{
+    width: 48%;
+    height: 610px;
+    object-fit: contain;
+}
+.estatisticas-conteudo{
+    width: 52%;
+    padding: 30px;
+}
+.numeros-kane{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 25px 0;
+}
+.numeros-kane strong{
+    display: block;
+    font-size: 3.5rem;
+    color: black;
+}
+.numeros-kane span{
+    display: block;
+}
+.temporada{
+    max-width: 220px;
+}
+@media(max-width: 750px){
+    .estatisticas{
+        flex-direction: column;
+    }
+    .foto-estatisticas, .estatisticas-conteudo{
+        width: 100%;
+    }
+    .foto-estatisticas{
+        height: 350px;
+    }
+}
